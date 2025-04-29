@@ -51,14 +51,15 @@ function Reservas() {
     
     let filtered = [...TableReservas];
     
-    if (filters.fecha_reciente) {
-      filtered.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+    // Cambios diferentes en main
+    if (filters.ordenar_fecha) {
+      filtered.sort((a, b) => filters.ascendente ? 
+        new Date(a.Fecha) - new Date(b.Fecha) : 
+        new Date(b.Fecha) - new Date(a.Fecha)
+      );
     }
-    if (filters.fecha_antigua) {
-      filtered.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-    }
-    if (filters.estado) {
-      filtered = filtered.filter(item => item.Estado === filters.selectedStatus);
+    if (filters.filtrar_estado) {
+      filtered = filtered.filter(item => item.Estado === filters.estado_seleccionado);
     }
     
     setFilteredReservas(filtered);
