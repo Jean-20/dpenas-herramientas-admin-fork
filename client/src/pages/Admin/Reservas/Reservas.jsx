@@ -10,10 +10,10 @@ import ModalEditDelete from "../../../components/ModalEditDelete";
 const View = "Reservas";
 const inputdata = [
   { label: 'Cliente', type: 'text', name: 'cliente' },
-  { label: 'Mesa', type: 'text', name: 'mesa' },
-  { label: 'Fecha', type: 'text', name: 'fecha' },
-  { label: 'Hora', type: 'text', name: 'hora' },
-  { label: 'Estado', type: 'text', name: 'estado' },
+  { label: 'Mesa', type: 'select', name: 'mesa' },
+  { label: 'Fecha', type: 'date', name: 'fecha' },
+  { label: 'Hora', type: 'time', name: 'hora' },
+  { label: 'Estado', type: 'select', name: 'estado' },
 ];
 
 const dataTop = [
@@ -27,35 +27,74 @@ const dataTop = [
 
 function Reservas() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { getTableReservas, TableReservas } = useAdmin();
+  const { getTableReservas, TableReservas = [], getMesas, mesas = [] } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalEditDeleteOpen, setIsModalEditDeleteOpen] = useState(false);
   const [modalEditDeleteData, setModalEditDeleteData] = useState(null);
   const [mode, setMode] = useState('edit');
   const [reservas, setReservas] = useState([]);
   const { createReservas, updateReservas, deleteReservas } = useAdmin();
-  
+  const [filteredReservas, setFilteredReservas] = useState([]);
+
   useEffect(() => {
     getTableReservas();
   }, []);
 
+  useEffect(() => {
+    if (TableReservas && Array.isArray(TableReservas)) {
+      setFilteredReservas(TableReservas);
+    }
+  }, [TableReservas]);
+
+  const handleFilter = (filters) => {
+    if (!TableReservas || !Array.isArray(TableReservas)) return;
+    
+    let filtered = [...TableReservas];
+    
+    if (filters.fecha_reciente) {
+      filtered.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+    }
+    if (filters.fecha_antigua) {
+      filtered.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+    }
+    if (filters.estado) {
+      filtered = filtered.filter(item => item.Estado === filters.selectedStatus);
+    }
+    
+    setFilteredReservas(filtered);
+  };
 
   const addReserva = (newReserva) => {
-    setReservas([...reservas, newReserva]);
-    createReservas(newReserva)
-    console.log(newReserva);
+    if (!newReserva) return;
+    
+    setReservas(prevReservas => [...prevReservas, newReserva]);
+    createReservas(newReserva);
+    setFilteredReservas(prevFiltered => [...prevFiltered, newReserva]);
   };
 
   const updateReserva = (editReserva) => {
-    setReservas(reservas.map(reserva => reserva.id === editReserva.id ? editReserva : reserva));
-    updateReservas(editReserva)
-    console.log(editReserva);
+    if (!editReserva) return;
+
+    const sanitizedEditReserva = Object.fromEntries(
+      Object.entries(editReserva).filter(([_, value]) => value !== null && value !== '')
+    );
+
+    setReservas(prevReservas => prevReservas.map(reserva => 
+      reserva.ReservaID === sanitizedEditReserva.ReservaID ? sanitizedEditReserva : reserva
+    ));
+    updateReservas(sanitizedEditReserva);
+    
+    setFilteredReservas(prevFiltered => prevFiltered.map(reserva => 
+      reserva.ReservaID === sanitizedEditReserva.ReservaID ? sanitizedEditReserva : reserva
+    ));
   };
 
-  const deleteReserva = (id) => {
-    setReservas(reservas.filter(reserva => reserva.id !== id));
-    deleteReservas(id)
-    console.log(`Reserva ${id} eliminada`);
+  const deleteReserva = (ReservaID) => {
+    if (!ReservaID) return;
+
+    setReservas(prevReservas => prevReservas.filter(reserva => reserva.ReservaID !== ReservaID));
+    deleteReservas(ReservaID);
+    setFilteredReservas(prevFiltered => prevFiltered.filter(reserva => reserva.ReservaID !== ReservaID));
   };
 
   const handleEditDelete = (item, action) => {
@@ -80,21 +119,34 @@ function Reservas() {
               <div className="mb-4 sm:mb-0">
                 <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Reservas</h1>
               </div>
-              {/* Middle: Boxes */}
               <div className="grid grid-cols-3 gap-6">
-              <div className="group bg-white shadow-lg shadow-gray-200 rounded-xl p-2.5 transition-all duration-500 w-56 ml-14 hover:shadow-gray-300">
+                <div className="group bg-white shadow-lg shadow-gray-200 rounded-xl p-2.5 transition-all duration-500 w-56 ml-14 hover:shadow-gray-300">
                   <h4 className="font-manrope font-bold text-xl text-gray-900 text-center">Número de {View}</h4>
-                  <p className="text-base font-medium text-gray-500 text-center">{TableReservas.length}</p>
-              </div>  
+                  <p className="text-base font-medium text-gray-500 text-center">
+                    {filteredReservas?.length || 0}
+                  </p>
+                </div>  
               </div>
               <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <FilterButton align="right" />
-                <button className="btn bg-gray-900 text-gray-100 hover:bg-gray-800" onClick={() => setIsModalOpen(true)}>
+                <FilterButton 
+                  align="right" 
+                  seccion={View}
+                  onFilter={handleFilter}
+                />
+                <button 
+                  className="btn bg-gray-900 text-gray-100 hover:bg-gray-800" 
+                  onClick={() => setIsModalOpen(true)}
+                >
                   Agregar Reserva +
                 </button>
               </div>
             </div>
-            <Datatable DataTop={dataTop} Data={TableReservas} Seccion={View} EditDelete={handleEditDelete} />
+            <Datatable 
+              DataTop={dataTop} 
+              Data={filteredReservas || []} 
+              Seccion={View} 
+              EditDelete={handleEditDelete} 
+            />
           </div>
         </main>
       </div>
@@ -104,6 +156,7 @@ function Reservas() {
         onSubmit={addReserva}
         Seccion={View}
         inputData={inputdata}
+        DataCategory={mesas}
       />
       <ModalEditDelete
         isOpen={isModalEditDeleteOpen}
@@ -113,6 +166,7 @@ function Reservas() {
         mode={mode}
         Seccion={View}
         updateData={modalEditDeleteData}
+        DataCategory={mesas}
       />
     </div>
   );
