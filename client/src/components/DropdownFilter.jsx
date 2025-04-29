@@ -1,29 +1,51 @@
 import { useState, useRef, useEffect } from "react";
 import Transition from "../utils/Transition";
 
-function DropdownFilter({ align }) {
+function DropdownFilter({ align, seccion, onFilter }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState({});
 
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
-  //Clear  filtres on click clear button 
-
-  const Checkrefs = {
-    DirectorIndirect: useRef(null),
-    RealTimeValue: useRef(null),
-    Topcahnnels: useRef(null),
-    SalesRefunds: useRef(null),
-    LastOrder: useRef(null),
-    TotalSpent: useRef(null),
+  // Definir las opciones de filtro según la sección
+  const filterOptions = {
+    Platillos: [
+      { id: 'precio_bajo', label: 'Precio más bajo' },
+      { id: 'precio_alto', label: 'Precio más alto' },
+      { id: 'categoria', label: 'Por categoría' }
+    ],
+    Mesas: [
+      { id: 'capacidad_baja', label: 'Menor capacidad' },
+      { id: 'capacidad_alta', label: 'Mayor capacidad' },
+      { id: 'disponible', label: 'Disponibles' }
+    ],
+    Reservas: [
+      { id: 'fecha_reciente', label: 'Más recientes' },
+      { id: 'fecha_antigua', label: 'Más antiguas' },
+      { id: 'estado', label: 'Por estado' }
+    ]
   };
 
-  const handleFilters = () => {
-    Object.keys(Checkrefs).forEach((key) => {
-      if (Checkrefs[key].current.checked) {
-        Checkrefs[key].current.checked = false;
-      }
-    });
+  const handleFilterChange = (filterId) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: !prev[filterId]
+    }));
+  };
+
+  const handleApplyFilters = () => {
+    if (onFilter) {
+      onFilter(selectedFilters);
+    }
+    setDropdownOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedFilters({});
+    if (onFilter) {
+      onFilter({});
+    }
   };
 
   // close on click outside
@@ -61,14 +83,9 @@ function DropdownFilter({ align }) {
         onClick={() => setDropdownOpen(!dropdownOpen)}
         aria-expanded={dropdownOpen}
       >
-        <span className="sr-only">Filtro Categorias</span>
+        <span className="sr-only">Filtros</span>
         <wbr />
-        <svg
-          className="fill-current"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-        >
+        <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16">
           <path d="M0 3a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H1a1 1 0 0 1-1-1ZM3 8a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1ZM7 12a1 1 0 1 0 0 2h2a1 1 0 1 0 0-2H7Z" />
         </svg>
       </button>
@@ -89,39 +106,41 @@ function DropdownFilter({ align }) {
       >
         <div ref={dropdown}>
           <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase pt-1.5 pb-2 px-3">
-          Filtro Categorias
+            Filtros de {seccion}
           </div>
           <ul className="mb-4">
-            <li className="py-1 px-3">
-              <label className="flex items-center">
-                <input
-                  ref={Checkrefs.DirectorIndirect}
-                  type="checkbox"
-                  className="form-checkbox"
-                />
-                <span className="text-sm font-medium ml-2">
-                  Direct VS Indirect
-                </span>
-              </label>
-            </li>
+            {filterOptions[seccion]?.map((option) => (
+              <li key={option.id} className="py-1 px-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox"
+                    checked={selectedFilters[option.id] || false}
+                    onChange={() => handleFilterChange(option.id)}
+                  />
+                  <span className="text-sm font-medium ml-2">
+                    {option.label}
+                  </span>
+                </label>
+              </li>
+            ))}
           </ul>
           <div className="py-2 px-3 border-t border-gray-200 dark:border-gray-700/60 bg-gray-50 dark:bg-gray-700/20">
             <ul className="flex items-center justify-between">
               <li>
                 <button
-                  onClick={handleFilters}
+                  onClick={handleClearFilters}
                   className="btn-xs bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-red-500"
                 >
-                  Clear
+                  Limpiar
                 </button>
               </li>
               <li>
                 <button
                   className="btn-xs bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white"
-                  onClick={() => setDropdownOpen(false)}
-                  onBlur={() => setDropdownOpen(false)}
+                  onClick={handleApplyFilters}
                 >
-                  Apply
+                  Aplicar
                 </button>
               </li>
             </ul>
