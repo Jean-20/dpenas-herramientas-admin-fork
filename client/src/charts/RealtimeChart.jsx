@@ -145,6 +145,7 @@ function RealtimeChart({
   }, [currentTheme])    
 
 
+  
   return (
     <React.Fragment>
       <div className="px-5 py-3">
