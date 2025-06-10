@@ -43,14 +43,14 @@ function DashboardCard01() {
       {
         data: [732, 610, 610, 504, 504, 504, 349, 349, 504, 342, 504, 610, 391, 192, 154, 273, 191, 191, 126, 263, 349, 252, 423, 622, 470, 532],
         fill: true,
-        backgroundColor: function(context) {
+        backgroundColor: function (context) {
           const chart = context.chart;
-          const {ctx, chartArea} = chart;
+          const { ctx, chartArea } = chart;
           return chartAreaGradient(ctx, chartArea, [
             { stop: 0, color: `rgba(${hexToRGB(tailwindConfig().theme.colors.violet[500])}, 0)` },
             { stop: 1, color: `rgba(${hexToRGB(tailwindConfig().theme.colors.violet[500])}, 0.2)` }
           ]);
-        },            
+        },
         borderColor: tailwindConfig().theme.colors.violet[500],
         borderWidth: 2,
         pointRadius: 0,
