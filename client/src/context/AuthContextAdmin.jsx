@@ -37,7 +37,9 @@ export const AuthProviderAdmin = ({ children }) => {
     const signin = async (admin) =>{
         try {
             const res = await loginRequest(admin);
-            console.log(res);
+            console.log(res.data);
+            setAdmin(res.data);
+            localStorage.setItem('user', JSON.stringify(res.data));
             setIsAuthenticated(true);
         } catch (error) {
             if(Array.isArray(error.response.data)){
